@@ -4,43 +4,52 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.BottomAppBarDefaults
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.flaze.trazer.fragments.MessageScreen
+import com.flaze.trazer.fragments.OverviewScreen
+import com.flaze.trazer.fragments.SettingsScreen
 import com.flaze.trazer.ui.theme.TrazerTheme
+import kotlinx.coroutines.launch
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
-            TrazerTheme {
-                Layout()
+            enableEdgeToEdge()
+            setContent {
+                TrazerTheme {
+                    Layout()
+                }
             }
+
         }
     }
 }
@@ -48,64 +57,51 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Layout() {
-    val currentIsDarkMode = isSystemInDarkTheme()
-    var isDarkMode by remember { mutableStateOf(currentIsDarkMode) }
+    val navController = rememberNavController()
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val appName = stringResource(id = R.string.app_name)
 
-    fun toggleDarkMode() {
-        isDarkMode = !isDarkMode
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(colors = topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                titleContentColor = MaterialTheme.colorScheme.primary,
-            ), title = {
-                Text("Top app bar")
-            })
-        },
-        bottomBar = {
-            BottomAppBar(
-                actions = {
-                    IconButton(onClick = { /* do something */ }) {
-                        Icon(Icons.Filled.Check, contentDescription = "Localized description")
-                    }
-                    IconButton(onClick = { /* do something */ }) {
-                        Icon(
-                            Icons.Filled.Edit,
-                            contentDescription = "Localized description",
-                        )
-                    }
-                    IconButton(onClick = { /* do something */ }) {
-                        Icon(
-                            Icons.Filled.Mic,
-                            contentDescription = "Localized description",
-                        )
-                    }
-                    IconButton(onClick = { /* do something */ }) {
-                        Icon(
-                            Icons.Filled.Image,
-                            contentDescription = "Localized description",
-                        )
-                    }
-                },
-                floatingActionButton = {
-                    FloatingActionButton(
-                        onClick = { /* do something */ },
-                        containerColor = BottomAppBarDefaults.bottomAppBarFabColor,
-                        elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
-                    ) {
-                        Icon(Icons.Filled.Add, "Localized description")
-                    }
-                }
-            )
-        },
-    ) { innerPadding ->
-        Button(
-            onClick = { toggleDarkMode() },
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            Text(if (isDarkMode) "Light Mode" else "Dark Mode")
+    ModalNavigationDrawer(drawerState = drawerState, drawerContent = {
+        ModalDrawerSheet {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(appName, style = MaterialTheme.typography.headlineMedium)
+                Spacer(modifier = Modifier.height(16.dp))
+                NavigationDrawerItem(icon = {
+                    Icon(
+                        Icons.Filled.Home, contentDescription = "Home"
+                    )
+                }, label = { Text("Home") }, selected = false, onClick = {
+                    scope.launch { drawerState.close() }
+                    navController.navigate("home")
+                })
+                NavigationDrawerItem(icon = {
+                    Icon(
+                        Icons.Filled.Settings, contentDescription = "Settings"
+                    )
+                }, label = { Text("Settings") }, selected = false, onClick = {
+                    scope.launch { drawerState.close() }
+                    navController.navigate("settings")
+                })
+            }
         }
-    }
+    }, content = {
+        Scaffold(topBar = {
+            TopAppBar(title = { Text(appName) }, navigationIcon = {
+                IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                    Icon(Icons.Filled.Menu, contentDescription = "Open drawer")
+                }
+            })
+        }) { innerPadding ->
+            NavHost(
+                navController = navController,
+                startDestination = "message",
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable("overview") { OverviewScreen() }
+                composable("message") { (MessageScreen()) }
+                composable("settings") { SettingsScreen() }
+            }
+        }
+    })
 }

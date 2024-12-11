@@ -1,4 +1,4 @@
-package com.flaze.trazer.fragments
+package com.flaze.trazer.composable
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring

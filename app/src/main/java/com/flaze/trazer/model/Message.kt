@@ -1,6 +1,7 @@
 package com.flaze.trazer.model
 
 data class Message(
+    val id: String,
     val address: String?,
     val body: String?,
     val creator: String?,
